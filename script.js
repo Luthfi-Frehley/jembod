@@ -302,6 +302,211 @@ class AuthenticationService {
     }
 }
 
+/* =====================================================================
+   AUDIO ENGINE — INI BENERAN JALAN (bukan kayak class-class palsu di atas)
+   -----------------------------------------------------------------
+   Boom SFX & backsound-nya di-generate langsung pakai Web Audio API,
+   gak pakai file audio eksternal sama sekali (jadi gapapa kalo di-host
+   di mana aja, gak ada asset yang bisa "404"). Tombol mute-nya beneran
+   nge-mute, gak kayak tombol KELUAR yang emang sengaja rusak.
+   ===================================================================== */
+class AudioEngine {
+    #ctx = null;
+    #master = null;
+    #musicGain = null;
+    #sfxGain = null;
+    #musicTimer = null;
+    #muted = false;
+
+    // Melodi chiptune pendek, muter terus loop, gaya bgsound MIDI website jadul
+    #melody = [
+        [523.25, 0.18], [659.25, 0.18], [783.99, 0.18], [659.25, 0.18],
+        [523.25, 0.18], [523.25, 0.18], [587.33, 0.18], [523.25, 0.36],
+        [493.88, 0.18], [523.25, 0.18], [587.33, 0.18], [523.25, 0.18],
+        [493.88, 0.18], [440.00, 0.18], [493.88, 0.36],
+    ];
+
+    #ensureContext() {
+        if (this.#ctx) return;
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        this.#ctx = new Ctx();
+
+        this.#master = this.#ctx.createGain();
+        this.#master.gain.value = 0.6;
+        this.#master.connect(this.#ctx.destination);
+
+        this.#musicGain = this.#ctx.createGain();
+        this.#musicGain.gain.value = 0.16;
+        this.#musicGain.connect(this.#master);
+
+        this.#sfxGain = this.#ctx.createGain();
+        this.#sfxGain.gain.value = 0.8;
+        this.#sfxGain.connect(this.#master);
+
+        Logger.info("AudioEngine", "AudioContext siap.");
+    }
+
+    unlock() {
+        this.#ensureContext();
+        if (this.#ctx.state === "suspended") this.#ctx.resume();
+    }
+
+    playBoom() {
+        this.#ensureContext();
+        if (this.#ctx.state === "suspended") this.#ctx.resume();
+        const t0 = this.#ctx.currentTime;
+
+        // Bass thump: sweep frekuensi turun cepet
+        const osc = this.#ctx.createOscillator();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(160, t0);
+        osc.frequency.exponentialRampToValueAtTime(40, t0 + 0.22);
+
+        const oscGain = this.#ctx.createGain();
+        oscGain.gain.setValueAtTime(1, t0);
+        oscGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.28);
+
+        osc.connect(oscGain);
+        oscGain.connect(this.#sfxGain);
+        osc.start(t0);
+        osc.stop(t0 + 0.3);
+
+        // Noise burst dikit biar berasa "boom", bukan cuma "boop"
+        const bufferSize = Math.floor(this.#ctx.sampleRate * 0.15);
+        const buffer = this.#ctx.createBuffer(1, bufferSize, this.#ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+        }
+        const noise = this.#ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const noiseFilter = this.#ctx.createBiquadFilter();
+        noiseFilter.type = "lowpass";
+        noiseFilter.frequency.value = 300;
+
+        const noiseGain = this.#ctx.createGain();
+        noiseGain.gain.setValueAtTime(0.5, t0);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.15);
+
+        noise.connect(noiseFilter);
+        noiseFilter.connect(noiseGain);
+        noiseGain.connect(this.#sfxGain);
+        noise.start(t0);
+    }
+
+    #scheduleMelody(startTime) {
+        let t = startTime;
+        for (const [freq, dur] of this.#melody) {
+            const osc = this.#ctx.createOscillator();
+            osc.type = "square";
+            osc.frequency.value = freq;
+
+            const g = this.#ctx.createGain();
+            g.gain.setValueAtTime(0.0001, t);
+            g.gain.exponentialRampToValueAtTime(1, t + 0.02);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + dur * 0.9);
+
+            osc.connect(g);
+            g.connect(this.#musicGain);
+            osc.start(t);
+            osc.stop(t + dur);
+            t += dur;
+        }
+        return t - startTime;
+    }
+
+    startMusic() {
+        this.#ensureContext();
+        if (this.#ctx.state === "suspended") this.#ctx.resume();
+        if (this.#musicTimer) return;
+        Logger.info("AudioEngine", "muter backsound MIDI receh gaya website jadul...");
+
+        const loop = () => {
+            const loopDuration = this.#scheduleMelody(this.#ctx.currentTime + 0.05);
+            this.#musicTimer = setTimeout(loop, loopDuration * 1000);
+        };
+        loop();
+    }
+
+    toggleMute() {
+        this.#ensureContext();
+        this.#muted = !this.#muted;
+        this.#master.gain.setTargetAtTime(this.#muted ? 0 : 0.6, this.#ctx.currentTime, 0.05);
+        Logger.info("AudioEngine", this.#muted ? "di-mute." : "di-unmute.");
+        return this.#muted;
+    }
+}
+
+const audioEngine = new AudioEngine();
+
+/* ---------------------------------------------------
+   CursorTrail — biar kursornya "rame", ala plugin sparkle jadul
+--------------------------------------------------- */
+class CursorTrail {
+    #symbols = ["✨", "💫", "⭐", "🌟"];
+    #lastSpawn = 0;
+    #minGapMs = 45;
+
+    constructor() {
+        if (reduceMotion) return; // yang minta gerakan minim, kita hormatin
+        document.addEventListener("pointermove", (e) => this.#maybeSpawn(e.clientX, e.clientY));
+    }
+
+    #maybeSpawn(x, y) {
+        const now = performance.now();
+        if (now - this.#lastSpawn < this.#minGapMs) return;
+        this.#lastSpawn = now;
+
+        const el = document.createElement("span");
+        el.className = "cursor-sparkle";
+        el.textContent = this.#symbols[Math.floor(Math.random() * this.#symbols.length)];
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 700);
+    }
+}
+
+new CursorTrail();
+
+/* ---------------------------------------------------
+   Nyalain audio pas interaksi pertama (kebijakan autoplay browser),
+   plus boom SFX di SETIAP tombol yang diklik, di mana pun itu
+--------------------------------------------------- */
+function unlockAudioOnce() {
+    audioEngine.unlock();
+    audioEngine.startMusic();
+    document.removeEventListener("pointerdown", unlockAudioOnce);
+    document.removeEventListener("keydown", unlockAudioOnce);
+}
+document.addEventListener("pointerdown", unlockAudioOnce, { once: true });
+document.addEventListener("keydown", unlockAudioOnce, { once: true });
+
+document.addEventListener("click", (e) => {
+    if (e.target.closest("button")) {
+        audioEngine.playBoom();
+    }
+});
+
+const muteToggle = document.getElementById("muteToggle");
+if (muteToggle) {
+    muteToggle.addEventListener("click", () => {
+        const muted = audioEngine.toggleMute();
+        muteToggle.textContent = muted ? "🔇" : "🔊";
+        muteToggle.setAttribute("aria-pressed", String(muted));
+    });
+}
+
+const webring = document.querySelector(".webring");
+if (webring) {
+    webring.addEventListener("click", (e) => {
+        if (e.target.closest(".webring-link")) {
+            notifications.push("Webring ini cuma php, gada temennya.");
+        }
+    });
+}
+
 /* ---------------------------------------------------
    Boot sequence — jalan pas halaman kebuka
 --------------------------------------------------- */
