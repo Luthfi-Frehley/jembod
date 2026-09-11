@@ -1,8 +1,8 @@
-# Simple Gateway & Referral Redirect Page
+# Simple Gateway & Referral Redirect Page (rutofi.store)
 
 Web redirect / bridge page ultra-ringan dan responsif yang dirancang khusus untuk memfasilitasi pengalihan pengunjung ke link referral (**DAFTAR**) dan portal resmi (**LOGIN**) secara instan.
 
-Tampilan mengusung tema *carbon fiber* gelap dengan tombol aksen emas menyala (*glowing gold*) yang elegan, persis sesuai format gateway link rujukan.
+Tampilan mengusung tema *carbon fiber seamless* gelap dengan tombol aksen ungu menyala (*purple running light*) yang elegan.
 
 ---
 
@@ -11,19 +11,47 @@ Tampilan mengusung tema *carbon fiber* gelap dengan tombol aksen emas menyala (*
 ```
 webhook/
 │
+├── CNAME                   # Custom domain pointer untuk GitHub Pages (rutofi.store)
 ├── config.js               # Pusat konfigurasi: Link DAFTAR (referral), link LOGIN, nama brand
 ├── index.html              # Struktur gateway redirect + fallback link statis jika JS mati
-├── style.css               # Desain tekstur carbon fiber & tombol glowing gold
+├── style.css               # Desain tekstur carbon fiber seamless & tombol purple running light
 ├── script.js               # Hydration dinamis dari config & otomatis meneruskan parameter UTM
-├── robots.txt              # File perayapan search engine
-├── sitemap.xml             # Peta situs
-├── README.md               # Panduan penggunaan
+├── robots.txt              # File perayapan search engine untuk https://rutofi.store
+├── sitemap.xml             # Peta situs XML dengan ekstensi gambar Google
+├── README.md               # Panduan penggunaan & deployment
 │
 └── assets/
-    ├── logo.png            # Logo brand (ROYAL123)
-    ├── banner.png          # Gambar flyer / promo banner tengah
-    └── favicon.svg         # Favicon browser
+    ├── logo.png            # Logo transparan ROYAL123
+    ├── banner.png          # Gambar flyer / promo banner tengah (1080p)
+    ├── bg-carbon.png       # Seamless carbon fiber tile (3.1 KB, 0 seam)
+    ├── logo-r.png          # Mahkota R Favicon
+    └── favicon.svg         # Favicon vector SVG
 ```
+
+---
+
+## 🌐 Arsitektur Deployment (GitHub ➔ Cloudflare ➔ rutofi.store)
+
+Proyek ini telah dikonfigurasi untuk alur:
+`Repository GitHub ➔ Cloudflare (Pages / DNS Proxy) ➔ rutofi.store`
+
+### Opsi A: Cloudflare Pages (Direkomendasikan)
+1. Buka dashboard [Cloudflare](https://dash.cloudflare.com/) ➔ **Workers & Pages** ➔ **Create application** ➔ **Pages**.
+2. Pilih **Connect to Git** dan hubungkan repository GitHub Anda.
+3. Konfigurasi build:
+   - **Framework preset**: None
+   - **Build command**: *(kosongkan)*
+   - **Build output directory**: `/` (root)
+4. Klik **Save and Deploy**.
+5. Buka tab **Custom domains** di project Pages, lalu masukkan `rutofi.store`. Cloudflare akan otomatis mengonfigurasi DNS dan sertifikat SSL/TLS gratis.
+
+### Opsi B: GitHub Pages + Cloudflare DNS Proxy
+1. Di GitHub repository: buka **Settings** ➔ **Pages**.
+2. Di bagian *Build and deployment*, pilih branch `main` / `master` dan folder `/ (root)`.
+3. Di bagian *Custom domain*, masukkan `rutofi.store` (file `CNAME` sudah tersedia di repository).
+4. Di dashboard DNS Cloudflare untuk domain `rutofi.store`:
+   - Buat record **CNAME** `@` mengarah ke `<username>.github.io` dengan status Proxy (Orange cloud) aktif.
+   - Atur SSL/TLS di Cloudflare ke mode **Full** atau **Full (Strict)**.
 
 ---
 
@@ -33,11 +61,11 @@ Cukup buka file [**`config.js`**](file:///d:/VSC/webhook/config.js) dan ubah bag
 
 ```javascript
 urls: {
-  // Ganti dengan link referral Anda:
+  // Ganti dengan link referral pendaftaran Anda:
   referralUrl: "https://websiteutama.com/register?ref=KODE_REFERRAL_ANDA",
 
-  // Ganti dengan link login resmi:
-  loginUrl: "https://websiteutama.com/login"
+  // Link login resmi (sudah terpasang ke linkjp.lol):
+  loginUrl: "https://linkjp.lol/royal123"
 }
 ```
 
@@ -45,21 +73,9 @@ urls: {
 
 ---
 
-## 🚀 Fitur Unggulan
+## 🔍 SEO, Robots.txt & Sitemap.xml
 
-1. **Ultra Cepat**: Ukuran total halaman < 30 KB, terbuka dalam sekejap tanpa render-blocking.
-2. **Anti-Gagal (Progressive Fallback)**: Jika pengunjung menggunakan browser tanpa JavaScript atau memblokir skrip, link tetap bekerja langsung dari atribut `href` HTML.
-3. **UTM Parameter Forwarding**: Jika pengunjung datang melalui iklan berbayar (misal: `https://landing-kamu.com/?utm_source=fb&utm_campaign=promo`), parameter tersebut otomatis disambungkan ke link tujuan pendaftaran referral Anda.
-4. **Mobile-First**: Tampilan otomatis pas di layar smartphone maupun komputer desktop tanpa perlu scroll berlebih.
-
----
-
-## 💻 Cara Menjalankan (Preview Lokal)
-
-Gunakan ekstensi **Live Server** di VS Code, atau jalankan melalui terminal:
-
-```bash
-# Menggunakan Python
-python -m http.server 3000
-```
-Lalu buka `http://localhost:3000` di browser Anda.
+- **Domain Utama**: `https://rutofi.store/`
+- **Robots.txt**: Mengizinkan perayapan search bot dan mengarahkan ke `https://rutofi.store/sitemap.xml`.
+- **Sitemap.xml**: Menyertakan metadata halaman utama dan Google Image Sitemap untuk flyer banner.
+- **Canonical & Open Graph**: Sudah dikonfigurasi menggunakan absolute URL `https://rutofi.store/` agar preview kartu WhatsApp, Telegram, dan Facebook tampil optimal.

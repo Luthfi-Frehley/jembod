@@ -10,6 +10,7 @@ const APP_CONFIG = {
   // --- INFORMASI BRAND & TAMPILAN ---
   brand: {
     name: "ROYAL123",
+    landingDomain: "https://rutofi.store",
     welcomeText: "SELAMAT DATANG DI",
     logoImage: "assets/logo.png",
     bannerImage: "assets/banner.png",

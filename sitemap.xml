@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
-    <!-- Ganti dengan domain landing page publik Anda -->
-    <loc>https://your-landing-domain.example.com/</loc>
+    <loc>https://rutofi.store/</loc>
     <lastmod>2026-09-12</lastmod>
-    <changefreq>weekly</changefreq>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://rutofi.store/assets/banner.png</image:loc>
+      <image:title>ROYAL123 Link Resmi Login dan Daftar Akun</image:title>
+    </image:image>
   </url>
 </urlset>
-
