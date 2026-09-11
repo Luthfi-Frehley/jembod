@@ -1,0 +1,8 @@
+# robots.txt for Referral Landing Page
+User-agent: *
+Allow: /
+
+# Peta Situs (Sitemap)
+# Ganti dengan domain rujukan resmi Anda
+Sitemap: https://your-landing-domain.example.com/sitemap.xml
+
