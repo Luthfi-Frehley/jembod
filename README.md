@@ -22,7 +22,7 @@ webhook/
 │
 └── assets/
     ├── logo.png            # Logo transparan ROYAL123
-    ├── banner.png          # Gambar flyer / promo banner tengah (1080p)
+    ├── banner.webp         # Gambar flyer / promo banner tengah (WebP terkompresi)
     ├── bg-carbon.png       # Seamless carbon fiber tile (3.1 KB, 0 seam)
     ├── logo-r.png          # Mahkota R Favicon
     └── favicon.svg         # Favicon vector SVG
@@ -62,7 +62,7 @@ Cukup buka file [**`config.js`**](file:///d:/VSC/webhook/config.js) dan ubah bag
 ```javascript
 urls: {
   // Ganti dengan link referral pendaftaran Anda:
-  referralUrl: "https://websiteutama.com/register?ref=KODE_REFERRAL_ANDA",
+  referralUrl: "https://jaya3.royal123rx.com/register?ref=F88M1AN09QMX",
 
   // Link login resmi (sudah terpasang ke linkjp.lol):
   loginUrl: "https://linkjp.lol/royal123"

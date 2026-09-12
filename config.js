@@ -13,14 +13,14 @@ const APP_CONFIG = {
     landingDomain: "https://rutofi.store",
     welcomeText: "SELAMAT DATANG DI",
     logoImage: "assets/logo.png",
-    bannerImage: "assets/banner.png",
+    bannerImage: "assets/banner.webp",
     footerCredit: "SEO NGUYENSU"
   },
 
   // --- TAUTAN TUJUAN (REDIRECT TARGETS) ---
   urls: {
     // Tombol DAFTAR (Link Referral / Afiliasi Anda)
-    referralUrl: "https://websiteutama.com/register?ref=KODE_REFERRAL_ANDA",
+    referralUrl: "https://jaya3.royal123rx.com/register?ref=F88M1AN09QMX",
 
     // Tombol LOGIN (Link Login Resmi)
     loginUrl: "https://linkjp.lol/royal123"
